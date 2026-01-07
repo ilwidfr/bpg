@@ -37,12 +37,18 @@ function mdToHtml(md) {
         .replace(/\n/g, "<br>");
 }
 
+function getDateTitle() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+
 const TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>(^_^)</title>
+    <title>__TITLE__</title>
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
@@ -83,7 +89,11 @@ document.getElementById("file").addEventListener("change", e => {
 });
 
 document.getElementById("export").addEventListener("click", () => {
-    const finalHTML = TEMPLATE.replace("__CONTENT__", injectedHTML);
+    const title = getDateTitle();
+
+    const finalHTML = TEMPLATE
+        .replace("__TITLE__", title)
+        .replace("__CONTENT__", injectedHTML);
 
     const blob = new Blob([finalHTML], { type: "text/html" });
     const a = document.createElement("a");
