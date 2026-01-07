@@ -3,132 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>(^_^)</title>
+<title>site builder</title>
 
 <style>
-    :root {
-        --fg: #111;
-        --bg: #fff;
-        --muted: #888;
-    }
+body {
+    font-family: system-ui, sans-serif;
+    max-width: 720px;
+    margin: 2rem auto;
+}
 
-    body {
-        margin: 2rem;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        color: var(--fg);
-        background: var(--bg);
-        max-width: 720px;
-    }
-
-    nav {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        font-size: 0.9rem;
-    }
-
-    .disp {
-        font-weight: 600;
-        margin-right: auto;
-    }
-
-    a {
-        color: inherit;
-        text-decoration: none;
-    }
-
-    a:hover {
-        text-decoration: underline;
-    }
-
-    #content {
-        white-space: pre-wrap;
-        line-height: 1.6;
-    }
-
-    footer {
-        margin-top: 3rem;
-        font-size: 0.8rem;
-        color: var(--muted);
-    }
-
-    input, button {
-        font: inherit;
-        margin-right: .5rem;
-    }
+#preview {
+    border-top: 1px solid #ddd;
+    margin-top: 2rem;
+    padding-top: 2rem;
+}
 </style>
 </head>
-
 <body>
-<nav>
-    <span class="disp">raster</span>
-    <a href="/about">about</a>
-    <a href="/work">work</a>
-    <a href="/blog">blog</a>
-    <a href="/contact">contact</a>
-    <a href="/now">now</a>
-</nav>
 
-<!-- injected content goes here -->
-<main id="content"></main>
+<input type="file" id="file" accept=".txt,.md">
+<button id="export">export html</button>
 
-<footer>
-    <input type="file" id="fileInput" accept=".txt,.md">
-    <button onclick="exportHTML()">export html</button>
-</footer>
+<div id="preview"></div>
 
 <script>
-/* extremely tiny markdown support */
-function mdToHtml(md) {
-    return md
-        .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-        .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-        .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-        .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
-        .replace(/\*(.*?)\*/gim, "<em>$1</em>")
-        .replace(/\n$/gim, "<br>");
-}
-
-const contentEl = document.getElementById("content");
-
-document.getElementById("fileInput").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        const text = reader.result;
-        contentEl.innerHTML =
-            file.name.endsWith(".md") ? mdToHtml(text) : text;
-    };
-    reader.readAsText(file);
-});
-
-function exportHTML() {
-    const html = `<!DOCTYPE html>
+const TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>(^_^)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>(^_^)</title>
+    <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-${document.documentElement.innerHTML}
-</body>
-</html>`;
+    <nav>
+        <span class="disp">raster</span>
+        <a class="nav" href="/about">about</a>
+        <a class="nav" href="/work">work</a>
+        <a class="nav" href="/blog">blog</a>
+        <a class="nav" href="/contact">contact</a>
+        <a class="nav" href="/now">now</a>
+    </nav>
 
-    const blob = new Blob([html], { type: "text/html" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "index.html";
-    a.click();
-}
-</script>
+__CONTENT__
 
 <script data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 <noscript>
 <img src="https://queue.simpleanalyticscdn.com/noscript.gif?collect-dnt=true"
      alt="" referrerpolicy="no-referrer-when-downgrade"/>
 </noscript>
+</body>
+</html>`;
+
+function mdToHtml(md) {
+    return md
+        .replace(/^### (.*)$/gim, "<h3>$1</h3>")
+        .replace(/^## (.*)$/gim, "<h2>$1</h2>")
+        .replace(/^# (.*)$/gim, "<h1>$1</h1>")
+        .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/gim, "<em>$1</em>")
+        .replace(/\n/g, "<br>");
+}
+
+let injectedHTML = "";
+
+document.getElementById("file").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        injectedHTML = file.name.endsWith(".md")
+            ? mdToHtml(reader.result)
+            : reader.result;
+
+        document.getElementById("preview").innerHTML = injectedHTML;
+    };
+    reader.readAsText(file);
+});
+
+document.getElementById("export").addEventListener("click", () => {
+    const finalHTML = TEMPLATE.replace("__CONTENT__", injectedHTML);
+
+    const blob = new Blob([finalHTML], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "index.html";
+    a.click();
+});
+</script>
+
 </body>
 </html>
